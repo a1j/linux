@@ -47,6 +47,7 @@ obj-$(CONFIG_MACH_LOONGSON32)		+= clk-loongson1.o
 obj-$(CONFIG_COMMON_CLK_LOONGSON2)	+= clk-loongson2.o
 obj-$(CONFIG_COMMON_CLK_HIFIBERRY_DACPRO)	+= clk-hifiberry-dacpro.o
 obj-$(CONFIG_COMMON_CLK_HIFIBERRY_DACPLUSHD)	+= clk-hifiberry-dachd.o
+obj-$(CONFIG_COMMON_CLK_XCLOCKDAC)	+= clk-xclockdac.o
 obj-$(CONFIG_COMMON_CLK_MAX77686)	+= clk-max77686.o
 obj-$(CONFIG_COMMON_CLK_MAX9485)	+= clk-max9485.o
 obj-$(CONFIG_ARCH_MILBEAUT_M10V)	+= clk-milbeaut.o
