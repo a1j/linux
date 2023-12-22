@@ -251,6 +251,7 @@ config SND_SOC_ALL_CODECS
 	imply SND_SOC_TAS571X
 	imply SND_SOC_TAS5720
 	imply SND_SOC_TAS6424
+	imply SND_SOC_TDA1541A
 	imply SND_SOC_TDA7419
 	imply SND_SOC_TFA9879
 	imply SND_SOC_TFA989X
@@ -1851,6 +1852,9 @@ config SND_SOC_TAS6424
 	help
 	  Enable support for Texas Instruments TAS6424 high-efficiency
 	  digital input quad-channel Class-D audio power amplifiers.
+
+config SND_SOC_TDA1541A
+	tristate
 
 config SND_SOC_TDA7419
 	tristate "ST TDA7419 audio processor"
