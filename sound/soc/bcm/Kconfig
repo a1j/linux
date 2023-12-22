@@ -98,6 +98,13 @@ config SND_BCM2708_SOC_HIFIBERRY_AMP
         help
          Say Y or M if you want to add support for the HifiBerry Amp amplifier board.
 
+config SND_BCM2708_SOC_XCLOCKDAC
+        tristate "Support for XclockDAC TDA1541A"
+        select SND_SOC_TDA1541A
+        select COMMON_CLK_XCLOCKDAC
+        help
+         Say Y or M if you want to add support for HifiBerry DAC+ HD.
+
 config SND_BCM2708_SOC_PIFI_40
          tristate "Support for the PiFi-40 amp"
          select SND_SOC_TAS571X
