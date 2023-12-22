@@ -19,7 +19,7 @@
 			#size-cells = <0>;
 			status = "okay";
 
-			xclk: xclk@4B {
+			clk: clk@4B {
 				compatible = "xclockdac,xclockdac-clk";
 				#clock-cells = <0>;
 				reg = <0x4B>;
@@ -31,9 +31,7 @@
 	fragment@2 {
 		target-path = "/";
 		__overlay__ {
-			status = "okay";
-
-			tda1541a: codec_bare {
+			codec_out: tda1541a-codec {
 				compatible = "phillips,tda1541a";
 				#sound-dai-cells = <0>;
 				#clock-cells = <0>;
@@ -47,9 +45,8 @@
 		__overlay__ {
 			compatible = "xclockdac,xclockdac";
 			i2s-controller = <&i2s_clk_consumer>;
-			clocks = <&xclk 0>;
+			clocks = <&clk 0>;
 			status = "okay";
 		};
 	};
-
 };

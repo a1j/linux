@@ -83,7 +83,7 @@ struct clk_xclockdac_drvdata {
 #define to_xclockdac_clk(_hw) \
 	container_of(_hw, struct clk_xclockdac_drvdata, hw)
 
-static int xclockdac_write_reg(struct xclockdac_driver_data *drvdata,
+static int xclockdac_write_reg(struct clk_xclockdac_drvdata *drvdata,
 			       uint8_t value)
 {
 	int ret;
@@ -181,20 +181,19 @@ const struct clk_ops clk_xclockdac_rate_ops = {
 
 static int xclockdac_i2c_probe(struct i2c_client *client)
 {
-	struct clk_xclockdac_driver_data *drvdata;
+	struct clk_xclockdac_drvdata *drvdata;
 	struct device *dev = &client->dev;
-	const char *xclk_name;
-	int i, ret;
+	struct device_node *dev_node = dev->of_node;
+	struct clk_init_data init;
+	int ret;
 
 	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
 	if (!drvdata)
 		return -ENOMEM;
 
-	drvdata->clk = devm_clk_get(dev, "xclk");
+	drvdata->clk = devm_clk_get(dev, "clk");
 	if (IS_ERR(drvdata->clk))
 		return PTR_ERR(drvdata->clk);
-
-	xclk_name = __clk_get_name(drvdata->xclk);
 
 	i2c_set_clientdata(client, drvdata);
 	drvdata->client = client;
@@ -232,7 +231,7 @@ static int xclockdac_i2c_probe(struct i2c_client *client)
 		dev_err(dev, "Cannot set rate : %d\n", ret);
 		return -EINVAL;
 	}
-	return ret
+	return ret;
 }
 
 static int clk_xclockdac_remove(struct device *dev)
@@ -262,14 +261,14 @@ static const struct of_device_id clk_xclockdac_dt_ids[] = {
 };
 MODULE_DEVICE_TABLE(of, clk_xclockdac_dt_ids);
 
-static struct i2c_driver xclockdac_driver = {
+static struct i2c_driver clk_xclockdac_i2c_driver = {
 	.driver = {
 		.name		= "xclockdac-clk",
-		.of_match_table	= xclockdac_dt_ids,
+		.of_match_table	= clk_xclockdac_dt_ids,
 	},
 	.probe_new = xclockdac_i2c_probe,
-	.remove = clk_xclockdac_remove,
-	.id_table = xclockdac_i2c_ids,
+	.remove = clk_xclockdac_i2c_remove,
+	.id_table = clk_xclockdac_i2c_ids,
 };
 module_i2c_driver(clk_xclockdac_i2c_driver);
 

@@ -52,8 +52,13 @@ static struct snd_pcm_hw_constraint_list xclockdac_constraints = {
 	.count = ARRAY_SIZE(xclockdac_rates),
 };
 
-static int snd_rpi_xlockdac_startup(struct snd_pcm_substream *substream)
+static int snd_rpi_xclockdac_startup(struct snd_pcm_substream *substream)
 {
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_card *card = rtd->card;
+
+	dev_warn(card->dev, "snd_rpi_xclockdac_startup"); // ###
+
 	/* constraints for standard sample rates */
 	snd_pcm_hw_constraint_list(substream->runtime, 0,
 				   SNDRV_PCM_HW_PARAM_RATE,
@@ -61,7 +66,7 @@ static int snd_rpi_xlockdac_startup(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static void snd_rpi_xlockdac_set_sclk(struct snd_soc_component *component,
+static void snd_rpi_xclockdac_set_sclk(struct snd_soc_component *component,
 				      int sample_rate)
 {
 	if (!IS_ERR(drvdata.sclk))
@@ -99,31 +104,14 @@ static int snd_rpi_xclockdac_hw_params(struct snd_pcm_substream *substream,
 
 /* machine stream operations */
 static struct snd_soc_ops snd_rpi_xclockdac_ops = {
-	.startup = snd_rpi_hb_dacplushd_startup,
 	.hw_params = snd_rpi_xclockdac_hw_params,
+	.startup = snd_rpi_xclockdac_startup,
 };
 
 SND_SOC_DAILINK_DEFS(
 	hifi, DAILINK_COMP_ARRAY(COMP_CPU("bcm2708-i2s.0")),
-	// DAILINK_COMP_ARRAY(COMP_CODEC("pcm179x.1-004c", "pcm179x-hifi")),
-	DAILINK_COMP_ARRAY(COMP_CODEC("tda1541a")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("tda1541a-codec", "tda1541a-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("bcm2708-i2s.0")));
-
-static int snd_rpi_xclockdac_startup(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	// struct snd_soc_component *component = rtd->codec_dai->component;
-
-	struct snd_soc_card *card = rtd->card;
-	dev_warn(card->dev, "snd_rpi_xclockdac_startup"); // ###
-	return 0;
-}
-
-/* machine stream operations */
-static struct snd_soc_ops snd_rpi_xclockdac_ops = {
-	.hw_params = snd_rpi_xclockdac_hw_params,
-	.startup = snd_rpi_xclockdac_startup,
-};
 
 static struct snd_soc_dai_link snd_rpi_xclockdac_dai[] = {
 	{
@@ -149,12 +137,12 @@ static struct snd_soc_card snd_rpi_xclockdac = {
 static int snd_rpi_xclockdac_probe(struct platform_device *pdev)
 {
 	int ret = 0;
-	dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe"); // ###
 	struct device *dev = &pdev->dev;
 	struct device_node *dev_node = dev->of_node;
 
 	snd_rpi_xclockdac.dev = &pdev->dev;
 
+	dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe"); // ###
 	if (pdev->dev.of_node) {
 		struct device_node *i2s_node;
 		struct snd_soc_dai_link *dai;
