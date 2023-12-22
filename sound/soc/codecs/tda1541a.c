@@ -51,13 +51,12 @@
  */
 
 static const u32 tda1541a_dai_rates[] = {
-	11025, 22050, 44100, 48000,
-	88200, 96000, 176400, 192000,
+	11025, 22050, 44100, 48000, 88200, 96000, 176400, 192000,
 };
 
 static const struct snd_pcm_hw_constraint_list dai_constraints = {
 	.count = ARRAY_SIZE(tda1541a_dai_rates),
-	.list  = tda1541a_dai_rates,
+	.list = tda1541a_dai_rates,
 };
 
 /* codec private data */
@@ -80,70 +79,70 @@ static int tda1541a_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 }
 
 static int tda1541a_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params,
-			     struct snd_soc_dai *dai)
+			      struct snd_pcm_hw_params *params,
+			      struct snd_soc_dai *dai)
 {
 	struct snd_soc_component *component = dai->component;
-	struct tda1541a_private *priv = snd_soc_component_get_drvdata(component);
+	struct tda1541a_private *priv =
+		snd_soc_component_get_drvdata(component);
 	int ret;
 
 	dev_dbg(component->dev, "hw_params %u Hz, %u width\n",
-		params_rate(params),
-		params_width(params));
+		params_rate(params), params_width(params));
 
 	dev_info(component->dev, "hw_params %u Hz, %u width\n",
-		params_rate(params),
-		params_width(params)); // ###
+		 params_rate(params),
+		 params_width(params)); // ###
 
 	priv->rate = params_rate(params);
 
-		switch (params_width(params)) {
-		case 16:
-			break;
-		default:
+	switch (params_width(params)) {
+	case 16:
+		break;
+	default:
 		dev_err(component->dev, "Bad frame size: %d\n",
 			params_width(params));
-			return -EINVAL;
+		return -EINVAL;
 
-	return 0;
-}
+		return 0;
+	}
 
-static int tda1541a_startup(struct snd_pcm_substream *substream,
-			  struct snd_soc_dai *dai)
-{
-	// struct snd_soc_component *component = dai->component;
-	// struct tda1541a_priv *tda1541a = snd_soc_component_get_drvdata(component);
-	struct device *dev = dai->dev;
+	static int tda1541a_startup(struct snd_pcm_substream * substream,
+				    struct snd_soc_dai * dai)
+	{
+		// struct snd_soc_component *component = dai->component;
+		// struct tda1541a_priv *tda1541a = snd_soc_component_get_drvdata(component);
+		struct device *dev = dai->dev;
 
-	dev_info(dev, "tda1541a_startup"); // ###
-	return snd_pcm_hw_constraint_list(substream->runtime, 0,
-				  SNDRV_PCM_HW_PARAM_RATE,
-				  &dai_constraints);
-}
+		dev_info(dev, "tda1541a_startup"); // ###
+		return snd_pcm_hw_constraint_list(substream->runtime, 0,
+						  SNDRV_PCM_HW_PARAM_RATE,
+						  &dai_constraints);
+	}
 
-static const struct snd_soc_dai_ops tda1541a_dai_ops = {
-	.startup	= tda1541a_startup,
-	.set_fmt	= tda1541a_set_dai_fmt,
-	.hw_params	= tda1541a_hw_params,
-};
+	static const struct snd_soc_dai_ops tda1541a_dai_ops = {
+		.startup = tda1541a_startup,
+		.set_fmt = tda1541a_set_dai_fmt,
+		.hw_params = tda1541a_hw_params,
+	};
 
-static const struct snd_soc_dapm_widget tda1541a_dapm_widgets[] = {
-SND_SOC_DAPM_DAC("DAC", "Playback", SND_SOC_NOPM, 0, 0),
-SND_SOC_DAPM_OUTPUT("LINEVOUTL"),
-SND_SOC_DAPM_OUTPUT("LINEVOUTR"),
-};
+	static const struct snd_soc_dapm_widget tda1541a_dapm_widgets[] = {
+		SND_SOC_DAPM_DAC("DAC", "Playback", SND_SOC_NOPM, 0, 0),
+		SND_SOC_DAPM_OUTPUT("LINEVOUTL"),
+		SND_SOC_DAPM_OUTPUT("LINEVOUTR"),
+	};
 
-static const struct snd_soc_dapm_route tda1541a_dapm_routes[] = {
-	{ "LINEVOUTL", NULL, "DAC" },
-	{ "LINEVOUTR", NULL, "DAC" },
-};
+	static const struct snd_soc_dapm_route tda1541a_dapm_routes[] = {
+		{ "LINEVOUTL", NULL, "DAC" },
+		{ "LINEVOUTR", NULL, "DAC" },
+	};
 
 #define TDA1541A_RATES SNDRV_PCM_RATE_8000_192000
 
 // #define TDA1541A_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE)
 #define TDA1541A_FORMATS (SNDRV_PCM_FMTBIT_S16_LE)
 
-static struct snd_soc_dai_driver tda1541a_dai = {
+	static struct snd_soc_dai_driver tda1541a_dai = {
 	.name = "tda1541a-hifi",
 	.playback = {
 		.stream_name = "Playback",
@@ -158,34 +157,65 @@ static struct snd_soc_dai_driver tda1541a_dai = {
 	.ops = &tda1541a_dai_ops,
 };
 
-static const struct snd_soc_component_driver soc_component_dev_tda1541a = {
-	.dapm_widgets		= tda1541a_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(tda1541a_dapm_widgets),
-	.dapm_routes		= tda1541a_dapm_routes,
-	.num_dapm_routes	= ARRAY_SIZE(tda1541a_dapm_routes),
-	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
-	.endianness		= 1,
-	.non_legacy_dai_naming	= 1,
+	static const struct snd_soc_component_driver
+		soc_component_dev_tda1541a = {
+			.dapm_widgets = tda1541a_dapm_widgets,
+			.num_dapm_widgets = ARRAY_SIZE(tda1541a_dapm_widgets),
+			.dapm_routes = tda1541a_dapm_routes,
+			.num_dapm_routes = ARRAY_SIZE(tda1541a_dapm_routes),
+			.idle_bias_on = 1,
+			.use_pmdown_time = 1,
+			.endianness = 1,
+		};
+
+	static int tda1541a_probe(struct platform_device * pdev)
+	{
+		struct tda1541a_private *tda1541a;
+
+		tda1541a = devm_kzalloc(&pdev->dev,
+					sizeof(struct tda1541a_private),
+					GFP_KERNEL);
+		if (!tda1541a)
+			return -ENOMEM;
+
+		dev_set_drvdata(&pdev->dev, tda1541a);
+
+		return devm_snd_soc_register_component(
+			&pdev->dev, &soc_component_dev_tda1541a, &tda1541a_dai,
+			1);
+	}
+
+	static int tda1541a_remove(struct platform_device * pdev)
+	{
+		return 0;
+	}
+
+#ifdef CONFIG_OF
+	static const struct of_device_id tda1541a_of_match[] = {
+		{
+			.compatible = "phillips,tda1541a",
+		},
+		{
+			.compatible = "phillips,tda1541",
+		},
+		{}
+	};
+	MODULE_DEVICE_TABLE(of, tda1541a_of_match);
+#endif
+
+	static struct platform_driver tda1541a_codec_driver = {
+	.driver = {
+		.name = "tda1541a-codec",
+		.of_match_table = of_match_ptr(tda1541a_of_match),
+	},
+
+	.probe = tda1541a_probe,
+	.remove = tda1541a_remove,
 };
 
-int tda1541a_probe(struct device *dev, struct regmap *regmap)
-{
-	struct tda1541a_private *tda1541a;
+	module_platform_driver(tda1541a_codec_driver);
 
-	tda1541a = devm_kzalloc(dev, sizeof(struct tda1541a_private),
-				GFP_KERNEL);
-	if (!tda1541a)
-		return -ENOMEM;
-
-	dev_set_drvdata(dev, tda1541a);
-
-	return devm_snd_soc_register_component(dev,
-			&soc_component_dev_tda1541a, &tda1541a_dai, 1);
-}
-
-EXPORT_SYMBOL_GPL(tda1541a_probe);
-MODULE_DESCRIPTION("ASoC tda1541a driver");
-MODULE_AUTHOR("Eugene Aleynikiov <beinguid0@gmail.com>");
-MODULE_ALIAS("platform:tda1541a-codec");
-MODULE_LICENSE("GPL");
+	MODULE_DESCRIPTION("ASoC tda1541a driver");
+	MODULE_AUTHOR("Eugene Aleynikiov <beinguid0@gmail.com>");
+	MODULE_ALIAS("platform:tda1541a-codec");
+	MODULE_LICENSE("GPL");
