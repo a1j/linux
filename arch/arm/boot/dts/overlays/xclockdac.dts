@@ -19,10 +19,10 @@
 			#size-cells = <0>;
 			status = "okay";
 
-			clk: clk@4B {
+			clk: clk@4b {
 				compatible = "xclockdac,xclockdac-clk";
 				#clock-cells = <0>;
-				reg = <0x4B>;
+				reg = <0x4b>;
 				status = "okay";
 			};
 		};

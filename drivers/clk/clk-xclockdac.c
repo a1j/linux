@@ -23,6 +23,7 @@
 #include <linux/slab.h>
 #include <linux/platform_device.h>
 #include <linux/i2c.h>
+#include <linux/regmap.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 
@@ -74,10 +75,11 @@ static const struct xclockdac_rate xclockdac_rates[] = {
  * @hw: clk_hw for the common clk framework
  */
 struct clk_xclockdac_drvdata {
+	struct regmap *regmap;
 	struct clk *clk;
 	struct i2c_client *client;
 	struct clk_hw hw;
-	uint8_t reg_value;
+	unsigned int reg_value;
 };
 
 #define to_xclockdac_clk(_hw) \
@@ -87,16 +89,17 @@ static int xclockdac_write_reg(struct clk_xclockdac_drvdata *drvdata,
 			       uint8_t value)
 {
 	int ret;
-	const uint8_t data[2] = { SMBUS_DAC_SET, value };
-	const int count = ARRAY_SIZE(data);
 
 	dev_dbg(&drvdata->client->dev, "updating value 0x%02x -> 0x%02x\n",
 		drvdata->reg_value, value);
 
 	drvdata->reg_value = value;
 
-	ret = i2c_master_send(drvdata->client, data, count);
+	ret = regmap_write(drvdata->regmap, SMBUS_DAC_SET, value);
 
+	if (ret < 0) {
+		dev_warn(&drvdata->client->dev, "Unable to regmap_write device register, code: %d\n", ret);
+	}
 	return ret < 0 ? ret : 0;
 }
 
@@ -179,13 +182,22 @@ const struct clk_ops clk_xclockdac_rate_ops = {
 	.set_rate = xclockdac_set_rate,
 };
 
-static int xclockdac_i2c_probe(struct i2c_client *client)
+const struct regmap_config xclockdac_clk_regmap = {
+        .reg_bits = 8,
+        .val_bits = 8,
+        .max_register = SMBUS_DAC_SET,
+};
+EXPORT_SYMBOL_GPL(xclockdac_clk_regmap);
+
+static int xclockdac_i2c_probe(struct i2c_client *client,
+						const struct i2c_device_id *id)
 {
 	struct clk_xclockdac_drvdata *drvdata;
 	struct device *dev = &client->dev;
 	struct device_node *dev_node = dev->of_node;
+	struct regmap_config config = xclockdac_clk_regmap;
 	struct clk_init_data init;
-	int ret;
+	int ret = 0;
 
 	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
 	if (!drvdata)
@@ -196,12 +208,17 @@ static int xclockdac_i2c_probe(struct i2c_client *client)
 		return PTR_ERR(drvdata->clk);
 
 	i2c_set_clientdata(client, drvdata);
+
+	drvdata->regmap = devm_regmap_init_i2c(client, &config);
+
+	if (IS_ERR(drvdata->regmap))
+        return PTR_ERR(drvdata->regmap);
+
 	drvdata->client = client;
 
-	ret = i2c_master_recv(drvdata->client, &drvdata->reg_value,
-			      sizeof(drvdata->reg_value));
+	ret = regmap_read(drvdata->regmap, SMBUS_DAC_SET, &drvdata->reg_value);
 	if (ret < 0) {
-		dev_warn(dev, "Unable to read device register: %d\n", ret);
+		dev_warn(dev, "Unable to regmap_read device register, code: %d\n", ret);
 		return ret;
 	}
 
@@ -266,7 +283,7 @@ static struct i2c_driver clk_xclockdac_i2c_driver = {
 		.name		= "xclockdac-clk",
 		.of_match_table	= clk_xclockdac_dt_ids,
 	},
-	.probe_new = xclockdac_i2c_probe,
+	.probe = xclockdac_i2c_probe,
 	.remove = clk_xclockdac_i2c_remove,
 	.id_table = clk_xclockdac_i2c_ids,
 };
