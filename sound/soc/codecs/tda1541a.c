@@ -70,7 +70,7 @@ static int tda1541a_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		SND_SOC_DAIFMT_MASTER_MASK);
 
 	if (fmt != (SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
-		    SND_SOC_DAIFMT_CBM_CFS)) {
+		    SND_SOC_DAIFMT_CBS_CFM)) {
 		dev_err(codec_dai->dev, "Invalid DAI format\n");
 		return -EINVAL;
 	}

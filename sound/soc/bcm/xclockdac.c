@@ -81,7 +81,7 @@ static int snd_rpi_xclockdac_init(struct snd_soc_pcm_runtime *rtd)
 	dai->name = "XclockDAC TDA1541A";
 	dai->stream_name = "XclockDAC TDA1541A";
 	dai->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
-		       SND_SOC_DAIFMT_CBM_CFM;
+		       SND_SOC_DAIFMT_CBS_CFM;
 
 	/* allow only fixed 16 clock counts per channel */
 	snd_soc_dai_set_bclk_ratio(cpu_dai, 16 * 2);
