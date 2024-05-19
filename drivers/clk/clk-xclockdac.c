@@ -203,10 +203,6 @@ static int xclockdac_i2c_probe(struct i2c_client *client,
 	if (!drvdata)
 		return -ENOMEM;
 
-	drvdata->clk = devm_clk_get(dev, "clk");
-	if (IS_ERR(drvdata->clk))
-		return PTR_ERR(drvdata->clk);
-
 	i2c_set_clientdata(client, drvdata);
 
 	drvdata->regmap = devm_regmap_init_i2c(client, &config);
