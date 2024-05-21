@@ -81,7 +81,7 @@ static int snd_rpi_xclockdac_init(struct snd_soc_pcm_runtime *rtd)
 	dai->name = "XclockDAC TDA1541A";
 	dai->stream_name = "XclockDAC TDA1541A";
 	dai->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
-		       SND_SOC_DAIFMT_CBS_CFM;
+		       SND_SOC_DAIFMT_CBM_CFS;
 
 	/* allow only fixed 16 clock counts per channel */
 	snd_soc_dai_set_bclk_ratio(cpu_dai, 16 * 2);
@@ -142,7 +142,7 @@ static int snd_rpi_xclockdac_probe(struct platform_device *pdev)
 
 	snd_rpi_xclockdac.dev = &pdev->dev;
 
-	dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe"); // ###
+	// dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe"); // ###
 	if (pdev->dev.of_node) {
 		struct device_node *i2s_node;
 		struct snd_soc_dai_link *dai;
@@ -150,16 +150,16 @@ static int snd_rpi_xclockdac_probe(struct platform_device *pdev)
 		dai = &snd_rpi_xclockdac_dai[0];
 		i2s_node = of_parse_phandle(pdev->dev.of_node, "i2s-controller",
 					    0);
-		dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe:of_node"); // ###
+		// dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe:of_node"); // ###
 
 		if (i2s_node) {
 			dai->cpus->of_node = i2s_node;
 			dai->platforms->of_node = i2s_node;
 			dai->cpus->dai_name = NULL;
 			dai->platforms->name = NULL;
-			dev_warn(
-				&pdev->dev,
-				"snd_rpi_xclockdac_probe:of_node:i2s_node"); // ###
+			// dev_warn(
+			// 	&pdev->dev,
+			// 	"snd_rpi_xclockdac_probe:of_node:i2s_node"); // ###
 		} else {
 			return -EPROBE_DEFER;
 		}
