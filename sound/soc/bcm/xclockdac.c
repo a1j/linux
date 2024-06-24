@@ -57,7 +57,7 @@ static int snd_rpi_xclockdac_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_card *card = rtd->card;
 
-	dev_warn(card->dev, "snd_rpi_xclockdac_startup"); // ###
+	dev_warn(card->dev, "xclockdac.c snd_rpi_xclockdac_startup"); // ###
 
 	/* constraints for standard sample rates */
 	snd_pcm_hw_constraint_list(substream->runtime, 0,
@@ -78,10 +78,44 @@ static int snd_rpi_xclockdac_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dai_link *dai = rtd->dai_link;
 	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
 
+/*
+ * DAI Clock gating.
+ *
+ * DAI bit clocks can be be gated (disabled) when the DAI is not
+ * sending or receiving PCM data in a frame. This can be used to save power.
+define SND_SOC_DAIFMT_CONT		(1 << 4)  continuous clock 
+define SND_SOC_DAIFMT_GATED		(0 << 4) clock is gated
+
+ * DAI hardware signal inversions.
+ *
+ * Specifies whether the DAI can also support inverted clocks for the specified
+ * format.
+define SND_SOC_DAIFMT_NB_NF		(0 << 8)  normal bit clock + frame
+define SND_SOC_DAIFMT_NB_IF		(2 << 8)  normal BCLK + inv FRM
+define SND_SOC_DAIFMT_IB_NF		(3 << 8)  invert BCLK + nor FRM
+define SND_SOC_DAIFMT_IB_IF		(4 << 8)  invert BCLK + FRM
+
+ * DAI hardware clock masters.
+ *
+ * This is wrt the codec, the inverse is true for the interface
+ * i.e. if the codec is clk and FRM master then the interface is
+ * clk and frame slave.
+define SND_SOC_DAIFMT_CBM_CFM		(1 << 12) * codec clk & FRM master
+define SND_SOC_DAIFMT_CBS_CFM		(2 << 12) * codec clk slave & FRM master
+define SND_SOC_DAIFMT_CBM_CFS		(3 << 12) * codec clk master & frame slave
+define SND_SOC_DAIFMT_CBS_CFS		(4 << 12) * codec clk & FRM slave
+
+*/
+
+
 	dai->name = "XclockDAC TDA1541A";
 	dai->stream_name = "XclockDAC TDA1541A";
 	dai->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
 		       SND_SOC_DAIFMT_CBM_CFS;
+
+	struct snd_soc_card *card = rtd->card;  // ###
+
+	dev_warn(card->dev, "snd_rpi_xclockdac_init"); // ###
 
 	/* allow only fixed 16 clock counts per channel */
 	snd_soc_dai_set_bclk_ratio(cpu_dai, 16 * 2);
@@ -118,7 +152,7 @@ static struct snd_soc_dai_link snd_rpi_xclockdac_dai[] = {
 		.name = "XclockDAC TDA1541A",
 		.stream_name = "XclockDAC TDA1541A",
 		.dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
-			   SND_SOC_DAIFMT_CBS_CFS,
+			   SND_SOC_DAIFMT_CBM_CFS,
 		.ops = &snd_rpi_xclockdac_ops,
 		.init = snd_rpi_xclockdac_init,
 		SND_SOC_DAILINK_REG(hifi),
@@ -142,7 +176,7 @@ static int snd_rpi_xclockdac_probe(struct platform_device *pdev)
 
 	snd_rpi_xclockdac.dev = &pdev->dev;
 
-	// dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe"); // ###
+	// dev_warn(&pdev->dev, "xclockdac.c snd_rpi_xclockdac_probe"); // ###
 	if (pdev->dev.of_node) {
 		struct device_node *i2s_node;
 		struct snd_soc_dai_link *dai;
@@ -150,16 +184,14 @@ static int snd_rpi_xclockdac_probe(struct platform_device *pdev)
 		dai = &snd_rpi_xclockdac_dai[0];
 		i2s_node = of_parse_phandle(pdev->dev.of_node, "i2s-controller",
 					    0);
-		// dev_warn(&pdev->dev, "snd_rpi_xclockdac_probe:of_node"); // ###
+		// dev_warn(&pdev->dev, "xclockdac.c snd_rpi_xclockdac_probe:of_node"); // ###
 
 		if (i2s_node) {
 			dai->cpus->of_node = i2s_node;
 			dai->platforms->of_node = i2s_node;
 			dai->cpus->dai_name = NULL;
 			dai->platforms->name = NULL;
-			// dev_warn(
-			// 	&pdev->dev,
-			// 	"snd_rpi_xclockdac_probe:of_node:i2s_node"); // ###
+			// dev_warn(&pdev->dev, "xclockdac.c snd_rpi_xclockdac_probe:of_node:i2s_node"); // ###
 		} else {
 			return -EPROBE_DEFER;
 		}
@@ -186,6 +218,7 @@ static int snd_rpi_xclockdac_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
+    dev_warn(&pdev->dev, "xclockdac.c snd_rpi_xclockdac_probe:success, setting rate\n");
 	clk_set_rate(drvdata.sclk, DEFAULT_RATE);
 
 	return ret;

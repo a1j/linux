@@ -90,7 +90,7 @@ static int xclockdac_write_reg(struct clk_xclockdac_drvdata *drvdata,
 {
 	int ret;
 
-	dev_dbg(&drvdata->client->dev, "updating value 0x%02x -> 0x%02x\n",
+	dev_warn(&drvdata->client->dev, "clk-xclockdac.c updating value 0x%02x -> 0x%02x\n",
 		drvdata->reg_value, value);
 
 	drvdata->reg_value = value;
@@ -112,6 +112,8 @@ static int xclockdac_set_rate(struct clk_hw *hw, unsigned long rate,
 	// actual_rate = (unsigned long)clk_xclockdac_round_rate(hw, rate,
 	// 	&parent_rate);
 
+	dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_set_rate: %ld\n", rate);
+
 	for (entry = xclockdac_rates; entry->out != 0; entry++)
 		if (entry->out == rate)
 			break;
@@ -131,8 +133,12 @@ static unsigned long xclockdac_recalc_rate(struct clk_hw *hw,
 
 	for (entry = xclockdac_rates; entry->out != 0; entry++)
 		if (val == entry->reg_value)
+		{
+			dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_recalc_rate: %ld\n", entry->out); // ###
 			return entry->out;
+		}
 
+	dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_recalc_rate: zero return"); // ###
 	return 0;
 }
 
@@ -140,11 +146,15 @@ static long xclockdac_round_rate(struct clk_hw *hw, unsigned long rate,
 				 unsigned long *parent_rate)
 {
 	const struct xclockdac_rate *curr, *prev = NULL;
+	struct clk_xclockdac_drvdata *drvdata = to_xclockdac_clk(hw); // ###
 
 	for (curr = xclockdac_rates; curr->out != 0; curr++) {
 		/* Exact matches */
 		if (curr->out == rate)
+		{
+			dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_round_rate (exact match): %ld\n", rate); // ###
 			return rate;
+		}
 
 		/*
 		 * Find the first entry that has a frequency higher than the
@@ -158,19 +168,23 @@ static long xclockdac_round_rate(struct clk_hw *hw, unsigned long rate,
 			 * lowest possible frequency.
 			 */
 			if (!prev)
+			{
+				dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_round_rate (clamp-lo): %ld -> %ld\n", rate, curr->out); // ###
 				return curr->out;
+			}
 
 			/*
 			 * Otherwise, determine whether the previous entry or
 			 * current one is closer.
 			 */
 			mid = prev->out + ((curr->out - prev->out) / 2);
-
+			dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_round_rate (round): %ld -> %ld\n", rate, (mid > rate) ? prev->out : curr->out); // ###
 			return (mid > rate) ? prev->out : curr->out;
 		}
 
 		prev = curr;
 	}
+	dev_warn(&drvdata->client->dev, "clk-xclockdac.c xclockdac_round_rate (clamp-hi): %ld -> %ld\n", rate, prev->out); // ###
 
 	/* If the last entry was still too high, clamp the value */
 	return prev->out;
@@ -189,8 +203,7 @@ const struct regmap_config xclockdac_clk_regmap = {
 };
 EXPORT_SYMBOL_GPL(xclockdac_clk_regmap);
 
-static int xclockdac_i2c_probe(struct i2c_client *client,
-						const struct i2c_device_id *id)
+static int xclockdac_i2c_probe(struct i2c_client *client)
 {
 	struct clk_xclockdac_drvdata *drvdata;
 	struct device *dev = &client->dev;
@@ -244,11 +257,13 @@ static int xclockdac_i2c_probe(struct i2c_client *client,
 		dev_err(dev, "Cannot set rate : %d\n", ret);
 		return -EINVAL;
 	}
+	dev_warn(dev, "clk-xclockdac probe success\n"); // ###
 	return ret;
 }
 
 static int clk_xclockdac_remove(struct device *dev)
 {
+	dev_warn(dev, "clk-xclockdac remove\n"); // ####
 	of_clk_del_provider(dev->of_node);
 	return 0;
 }
